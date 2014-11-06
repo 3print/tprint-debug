@@ -29,13 +29,17 @@ module TPrint
         if verbose
           if input.size > 0
             out << padding + "[ "
-            input.each{|o| out << padding_plus + "- " + prepare_input(o, verbose: verbose).first}
+            input.each do |o|
+              _out = prepare_input([o], verbose: verbose)
+              out << padding_plus + "- " + _out.first
+              out += _out[1..-1].map{|oo| padding_plus + "  " + oo}
+            end
             out << padding + "]"
           else
             out << padding + "[]"
           end
         else
-          out << padding + "[ " + input.map{|o| prepare_input(o, verbose: verbose)}.join(", ") + " ]"
+          out << padding + "[ " + input.map{|o| prepare_input([o], verbose: verbose)}.join(", ") + " ]"
         end
       elsif Hash === input
         out << padding + "{"
