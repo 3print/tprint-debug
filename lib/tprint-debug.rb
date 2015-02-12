@@ -66,7 +66,7 @@ module TPrint
 
   def self.log_level
     lvl   = @log_level
-    lvl ||= ENV['LOG_LEVEL']
+    lvl ||= ENV['LOG_LEVEL'].to_i
     lvl ||= LOG if rails? && (Rails.env.production? || Rails.env.store?)
     lvl ||= DEBUG
     lvl
