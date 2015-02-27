@@ -3,6 +3,10 @@ module TPrint
   WARN=1
   LOG=0
 
+  def self.kill_line text
+    "\r\e[2K#{text}"
+  end
+
   def self.colorize(text, color_code)
     "\033[#{color_code}m#{text}\033[0m"
   end
@@ -15,22 +19,38 @@ module TPrint
       self.colorize(text, "32")
   end
 
+  def self.options_keys
+    %i(verbose kill_line)
+  end
+
+  def self.is_options? h
+    h.is_a?(Hash) && h.keys.all?{|k| options_keys.include?(k)}
+  end
+
   def self.prepare_input inputs, opts={}
     depth = opts[:depth] || 0
-    verbose = opts[:verbose]
+    options = Hash[*options_keys.map{|k| [k, opts[k]]}.flatten]
     out = []
     padding = "  "*depth
     padding_plus = "  "*(depth+1)
     inputs = [inputs] unless inputs.is_a?(Array)
+    _inputs = []
     inputs.each do |input|
+      if is_options? input
+        options.update input
+      else
+        _inputs << input
+      end
+    end
+    _inputs.each do |input|
       if String === input
         out << padding + "\"#{input}\""
       elsif Array === input
-        if verbose
+        if options[:verbose]
           if input.size > 0
             out << padding + "[ "
             input.each do |o|
-              _out = prepare_input([o], verbose: verbose)
+              _out, null = prepare_input([o], options)
               out << padding_plus + "- " + _out.first
               out += _out[1..-1].map{|oo| padding_plus + "  " + oo}
             end
@@ -39,12 +59,12 @@ module TPrint
             out << padding + "[]"
           end
         else
-          out << padding + "[ " + input.map{|o| prepare_input([o], verbose: verbose)}.join(", ") + " ]"
+          out << padding + "[ " + input.map{|o| prepare_input([o], options).first}.join(", ") + " ]"
         end
       elsif Hash === input
         out << padding + "{"
         input.each do |k, v|
-          tmp = prepare_input([v], depth: depth, verbose: verbose)
+          tmp, null = prepare_input([v], {depth: depth}.update(options))
           out << padding_plus + "- #{k}: " + tmp.first
           tmp[1..-1].each do |vv|
              out << " " * (depth + 1 + "- #{k}: ".size) + vv
@@ -57,7 +77,7 @@ module TPrint
         out << padding + input
       end
     end
-    out
+    [out, options]
   end
 
   def self.log_level= level
@@ -95,44 +115,45 @@ module TPrint
     [first, infos[1]]
   }
 
-  def self.output color, inputs, caller_infos
+  def self.output color, inputs, caller_infos, options={}
     inputs.each do |l|
-      puts send(color, "#{caller_infos[0]}:#{caller_infos[1]} >>>\t" + l.gsub("\n", ''))
+      out = send(color, "#{caller_infos[0]}:#{caller_infos[1]} >>>\t" + l.gsub("\n", ''))
+      if options[:kill_line]
+        @killed_previous = true
+        STDOUT.print kill_line out
+      else
+        puts "\n" if @killed_previous
+        puts out
+        @killed_previous = false
+      end
     end
   end
 
   def self.debug *inputs
     for_log_level DEBUG do
-      _inputs = prepare_input inputs, verbose: @verbose
+      _inputs, options = prepare_input inputs, verbose: @verbose
       caller_infos = @get_caller_infos.call()
-      output 'red', _inputs, caller_infos
+      output 'red', _inputs, caller_infos, options
     end
     inputs
   end
 
   def self.debug_verbose *inputs
-    being_verbose do
-      debug *inputs
-    end
-    inputs
+    debug *inputs, verbose: true
   end
 
   def self.log *inputs
     for_log_level LOG do
-      _inputs = prepare_input inputs
+      _inputs, options = prepare_input inputs
       caller_infos = @get_caller_infos.call()
-      output 'green', _inputs, caller_infos
+      output 'green', _inputs, caller_infos, options
     end
     inputs
   end
 
   def self.log_verbose *inputs
-    being_verbose do
-      log *inputs
-    end
-    inputs
+    log *inputs, verbose: true
   end
-
 
   def self.start_timer id=:default, verbose=true
     @@timers ||= {}
