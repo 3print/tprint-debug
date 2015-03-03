@@ -165,7 +165,12 @@ module TPrint
     timer = opts[:timer] || :default
     relative = opts[:relative]
     time = Time.now - @@timers[timer]
-    debug "#{msg} (#{time}s)"
+    unit = "s"
+    if time < 1000
+      time *= 1000
+      unit = "ms"
+    end
+    debug "#{msg} (#{time}#{unit})"
     start_timer timer, false if relative
   end
 end
