@@ -20,7 +20,7 @@ module TPrint
   end
 
   def self.options_keys
-    %i(verbose kill_line)
+    %w(verbose kill_line).map &:intern
   end
 
   def self.is_options? h
