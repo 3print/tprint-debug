@@ -5,6 +5,8 @@ TPrint.print 'foo'
 TPrint.print 'foo', color: "blue"
 TPrint.print 'foo', color: "pink"
 TPrint.log 'foo'
+TPrint.log 'foo', 'bar'
+TPrint.log ['foo', 'bar']
 TPrint.debug 'foo'
 TPrint.debug [:a, "b", "1"]
 TPrint.debug [:a, "b", "1"], verbose: true

@@ -55,7 +55,11 @@ module TPrint
     end
     _inputs.each do |input|
       if String === input
-        out << padding + "\"#{input}\""
+        if _inputs.size == 1
+          out << padding + input
+        else
+          out << padding + "\"#{input}\""
+        end
       elsif Array === input
         if options[:verbose]
           if input.size > 0
