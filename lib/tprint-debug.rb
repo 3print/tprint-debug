@@ -174,9 +174,14 @@ module TPrint
     inputs
   end
 
+  def self.print_error *inputs
+    print *inputs, color: "red"
+  end
+
   def self.log_verbose *inputs
     log *inputs, verbose: true
   end
+
 
   def self.start_timer id=:default, verbose=true
     @@timers ||= {}
