@@ -3,6 +3,17 @@ module TPrint
   WARN=1
   LOG=0
 
+  COLORS = {
+    30 => "black",
+    31 => "red",
+    32 => "green",
+    33 => "yellow",
+    34 => "blue",
+    35 => "magenta",
+    36 => "cyan",
+    37 => "white"
+  }
+
   def self.kill_line text
     "\r\e[2K#{text}"
   end
@@ -11,16 +22,16 @@ module TPrint
     "\033[#{color_code}m#{text}\033[0m"
   end
 
-  def self.red(text)
-      self.colorize(text, "31")
-  end
-
-  def self.green(text)
-      self.colorize(text, "32")
+  class << self
+    TPrint::COLORS.each do |code, name|
+      define_method name do |text|
+        colorize(text, code)
+      end
+    end
   end
 
   def self.options_keys
-    %w(verbose kill_line).map &:intern
+    %w(verbose kill_line color).map &:intern
   end
 
   def self.is_options? h
@@ -148,6 +159,18 @@ module TPrint
       caller_infos = @get_caller_infos.call()
       output 'green', _inputs, caller_infos, options
     end
+    inputs
+  end
+
+  def self.print *inputs
+    _inputs, options = prepare_input inputs
+    color = options[:color] || 'green'
+    unless COLORS.values.include? color
+      debug "unknow color: #{color}"
+      color = "green"
+    end
+    caller_infos = @get_caller_infos.call()
+    output color, _inputs, caller_infos, options
     inputs
   end
 

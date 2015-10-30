@@ -1,6 +1,9 @@
 require './lib/tprint-debug.rb'
 
 raise unless TPrint.is_options?(:verbose=>nil, :kill_line=>nil)
+TPrint.print 'foo'
+TPrint.print 'foo', color: "blue"
+TPrint.print 'foo', color: "pink"
 TPrint.log 'foo'
 TPrint.debug 'foo'
 TPrint.debug [:a, "b", "1"]
